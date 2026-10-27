@@ -1,1 +1,126 @@
-
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#183d35">
+<title>JobDay — Contractor Tracker</title>
+<style>
+:root{--green:#183d35;--green2:#31584d;--mint:#dcebe4;--bg:#f5f7f6;--ink:#17211e;--muted:#64716b;--line:#dce3df;--white:#fff;--red:#a23d35}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding-bottom:84px}
+header{background:var(--green);color:white;padding:22px 18px 18px;position:sticky;top:0;z-index:5}
+.brand{font-size:26px;font-weight:800;letter-spacing:-.5px}.sub{font-size:13px;color:#d6e7df;margin-top:4px}
+main{max-width:720px;margin:auto;padding:16px}.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:18px}
+.nav button{border:0;border-radius:12px;background:#e8eeeb;padding:11px 4px;color:#30413a;font-weight:650;font-size:12px}.nav button.active{background:var(--green);color:#fff}
+h2{font-size:21px;margin:6px 0 5px}h3{font-size:16px;margin:0 0 10px}.muted{color:var(--muted);font-size:13px}.row{display:flex;align-items:center;gap:10px}.between{justify-content:space-between}.grow{flex:1;min-width:0}
+.card{background:white;border:1px solid var(--line);border-radius:16px;padding:14px;margin:12px 0;box-shadow:0 2px 8px #1c332608}
+button,.button{font:inherit;cursor:pointer}.primary{background:var(--green);color:white;border:0;border-radius:12px;padding:12px 14px;font-weight:700}.secondary{background:white;border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--ink);font-weight:650}.danger{color:var(--red);border-color:#e6c8c4}
+input,select,textarea{width:100%;font:inherit;border:1px solid #cbd5cf;background:white;border-radius:10px;padding:12px;color:var(--ink);margin:5px 0 12px}textarea{min-height:80px;resize:vertical}label{font-size:13px;font-weight:700;display:block;margin-top:5px}
+.calendar-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:14px 0}.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.weekday{text-align:center;color:var(--muted);font-size:12px;padding:5px 0}.day{border:0;min-height:43px;border-radius:10px;background:#eaf0ed;position:relative;color:var(--ink)}.day.selected{background:var(--green);color:white}.dot{height:5px;width:5px;border-radius:50%;background:#4e9b7e;margin:3px auto 0}.day.selected .dot{background:#d9f1e4}
+.jobtitle{font-weight:750}.pill{display:inline-block;border-radius:30px;background:#e7f0eb;color:#275545;padding:4px 8px;font-size:11px;font-weight:700}
+.task{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid #edf0ee}.task:last-child{border-bottom:0}.task input{width:20px;height:20px;margin:1px 0;accent-color:var(--green)}.task.done .tasktext{text-decoration:line-through;color:#7c8781}
+.timer{font-size:32px;font-weight:800;letter-spacing:1px;margin:8px 0}.empty{text-align:center;padding:22px 10px;color:var(--muted)}.hidden{display:none!important}.small{font-size:12px}.footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));text-align:center;color:var(--muted);font-size:11px}
+@media(min-width:600px){main{padding:22px}.nav button{font-size:14px}}
+</style>
+</head>
+<body>
+<header><div class="brand">JobDay</div><div class="sub">Every job. Every task. Every hour.</div></header>
+<main>
+<div class="nav">
+<button class="active" data-page="calendar">Calendar</button><button data-page="jobs">Jobs</button><button data-page="checklist">Checklist</button><button data-page="reports">Reports</button>
+</div>
+<section id="calendar" class="page">
+<div class="row between"><div><h2>Work calendar</h2><div class="muted">Tap a date to see jobs.</div></div><button class="primary" id="addFromCalendar">+ Add job</button></div>
+<div class="calendar-head"><button class="secondary" id="prevMonth">‹</button><h3 id="monthTitle"></h3><button class="secondary" id="nextMonth">›</button></div>
+<div class="cal" id="calendarGrid"></div>
+<div class="card"><div class="row between"><div><h3 id="selectedTitle">Jobs</h3><div class="muted" id="dayCount"></div></div><button class="secondary" id="addForDay">+ Add</button></div><div id="dayJobs"></div></div>
+</section>
+<section id="jobs" class="page hidden">
+<div class="row between"><div><h2>Your jobs</h2><div class="muted">Construction, repairs, turnovers, and cleaning.</div></div><button class="primary" id="newJobBtn">+ New job</button></div>
+<div id="jobList"></div>
+<div id="jobForm" class="card hidden">
+<h3>Create a job</h3>
+<label>Job name</label><input id="fName" placeholder="e.g. Bathroom remodel">
+<label>Customer name</label><input id="fCustomer" placeholder="Customer or business">
+<label>Type of work</label><select id="fType"><option>Construction</option><option>Cleaning</option></select>
+<label>Job address (optional)</label><input id="fAddress" placeholder="Property address">
+<label>Scheduled date</label><input id="fDate" type="date">
+<label>Initial notes (optional)</label><textarea id="fNotes" placeholder="Scope of work, access instructions..."></textarea>
+<div class="row"><button class="primary grow" id="saveJob">Save job</button><button class="secondary" id="cancelJob">Cancel</button></div>
+</div>
+</section>
+<section id="checklist" class="page hidden">
+<div id="noActive" class="empty">Choose a job from the Jobs or Calendar page first.</div>
+<div id="activeArea" class="hidden">
+<div class="row between"><div class="grow"><h2 id="activeName"></h2><div class="muted" id="activeMeta"></div></div><button class="secondary" id="switchJob">Switch</button></div>
+<div class="card"><div class="muted">TIME TRACKER</div><div class="timer" id="timerDisplay">00:00:00</div><div class="muted" id="timerState">Timer stopped</div><div class="row" style="margin-top:12px"><button class="primary grow" id="startTimer">▶ Start</button><button class="secondary grow" id="stopTimer">■ Stop & save</button></div></div>
+<div class="card"><h3>Job checklist</h3><div id="taskList"></div><form id="taskForm"><label>Add task or work item</label><input id="taskInput" placeholder="e.g. Install trim"><button class="primary" type="submit">Add checklist item</button></form></div>
+<div class="card"><label>Materials and cleaning supplies used</label><textarea id="suppliesInput" placeholder="Paint, lumber, cleaner, trash bags, quantities..."></textarea><label>Work notes</label><textarea id="notesInput" placeholder="Work performed, issues, follow-up needed..."></textarea><label>Photo record (optional)</label><input id="photoInput" placeholder="e.g. Before: kitchen floor"><button class="secondary" id="addPhoto">Add photo note</button><div id="photoList"></div><p class="muted">Photo notes are text labels only. Actual photo attachments can be added in a later version.</p></div>
+</div>
+</section>
+<section id="reports" class="page hidden">
+<h2>Customer work report</h2><div class="muted">Create a summary you can copy into a text message.</div>
+<label>Choose job</label><select id="reportJob"></select>
+<div class="card" id="reportPreview"></div><button class="primary" id="makeReport">Prepare text report</button>
+<textarea id="reportText" class="hidden" aria-label="Report text"></textarea>
+<div class="row"><button class="secondary grow hidden" id="copyReport">Copy report</button><button class="secondary grow hidden" id="shareReport">Share / text</button></div>
+<p class="muted">Your phone may offer Messages in the Share menu. Review the report before sending it.</p>
+</section>
+</main>
+<div class="footer">JobDay • Saved on this device in this browser</div>
+<script>
+const $=id=>document.getElementById(id);
+const today=new Date();let viewYear=today.getFullYear(),viewMonth=today.getMonth();
+let selectedDate=isoDate(today),activeId=null,timerInterval=null;
+const defaultJobs=[];
+let jobs=load();
+function isoDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function load(){try{return JSON.parse(localStorage.getItem('jobday_jobs_v1')||'[]')}catch(e){return []}}
+function save(){localStorage.setItem('jobday_jobs_v1',JSON.stringify(jobs));renderAll()}
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function dateLabel(s){if(!s)return '';return new Date(s+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}
+function duration(j){let n=j.elapsed||0;if(j.startedAt)n+=Math.floor((Date.now()-j.startedAt)/1000);return n}
+function clock(n){n=Math.max(0,n||0);return [Math.floor(n/3600),Math.floor(n%3600/60),n%60].map(v=>String(v).padStart(2,'0')).join(':')}
+function selectedJobs(){return jobs.filter(j=>j.date===selectedDate)}
+function showPage(p){document.querySelectorAll('.page').forEach(el=>el.classList.toggle('hidden',el.id!==p));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));if(p==='checklist')renderActive();if(p==='reports')renderReport()}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+function renderCalendar(){
+ $('monthTitle').textContent=new Date(viewYear,viewMonth,1).toLocaleDateString(undefined,{month:'long',year:'numeric'});
+ const grid=$('calendarGrid');grid.innerHTML='';
+ ['S','M','T','W','T','F','S'].forEach(d=>{let e=document.createElement('div');e.className='weekday';e.textContent=d;grid.append(e)});
+ const first=new Date(viewYear,viewMonth,1).getDay(),count=new Date(viewYear,viewMonth+1,0).getDate();
+ for(let i=0;i<first;i++){let e=document.createElement('div');grid.append(e)}
+ for(let n=1;n<=count;n++){let date=isoDate(new Date(viewYear,viewMonth,n));let b=document.createElement('button');b.className='day'+(date===selectedDate?' selected':'');b.innerHTML=String(n)+(jobs.some(j=>j.date===date)?'<div class="dot"></div>':'');b.onclick=()=>{selectedDate=date;renderCalendar();renderDayJobs()};grid.append(b)}
+ $('selectedTitle').textContent=new Date(selectedDate+'T12:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'});
+}
+function jobCard(j){return `<div class="card"><div class="row"><div class="grow"><div class="jobtitle">${esc(j.name)}</div><div class="muted">${esc(j.customer)} · ${esc(j.type)} · ${dateLabel(j.date)}</div><div style="margin-top:7px"><span class="pill">${(j.tasks||[]).filter(t=>t.done).length}/${(j.tasks||[]).length} tasks done</span> <span class="pill">${clock(duration(j))}</span></div></div><button class="secondary" data-open="${j.id}">Open</button></div><div class="row" style="margin-top:10px"><button class="secondary" data-edit="${j.id}">Edit details</button><button class="secondary danger" data-delete="${j.id}">Delete</button></div></div>`}
+function bindJobCards(root){root.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{activeId=Number(b.dataset.open);showPage('checklist')});root.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editJob(Number(b.dataset.edit)));root.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{if(confirm('Delete this job and its records? This cannot be undone.')){jobs=jobs.filter(j=>j.id!==Number(b.dataset.delete));if(activeId===Number(b.dataset.delete))activeId=null;save()}})}
+function renderDayJobs(){let list=selectedJobs();$('dayCount').textContent=`${list.length} job${list.length===1?'':'s'} scheduled`;const root=$('dayJobs');root.innerHTML=list.length?list.map(jobCard).join(''):'<div class="empty">No jobs logged for this date yet.</div>';bindJobCards(root)}
+function renderJobList(){const root=$('jobList');root.innerHTML=jobs.length?jobs.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(jobCard).join(''):'<div class="empty">No jobs yet. Tap “New job” to add your first one.</div>';bindJobCards(root)}
+function renderActive(){const j=jobs.find(x=>x.id===activeId);$('noActive').classList.toggle('hidden',!!j);$('activeArea').classList.toggle('hidden',!j);if(!j)return;$('activeName').textContent=j.name;$('activeMeta').textContent=`${j.customer} · ${j.type} · ${dateLabel(j.date)}${j.address?' · '+j.address:''}`;$('timerDisplay').textContent=clock(duration(j));$('timerState').textContent=j.startedAt?'Timer running — keep this page open':'Timer stopped';$('startTimer').disabled=!!j.startedAt;$('stopTimer').disabled=!j.startedAt;$('taskList').innerHTML=(j.tasks||[]).map((t,i)=>`<div class="task ${t.done?'done':''}"><input type="checkbox" data-task="${t.id}" ${t.done?'checked':''}><div class="tasktext grow">${esc(t.name)}</div><button class="secondary danger" data-taskdel="${t.id}" aria-label="Delete task">×</button></div>`).join('')||'<div class="empty">Add your first checklist item below.</div>'; $('taskList').querySelectorAll('[data-task]').forEach(c=>c.onchange=()=>{j.tasks.forEach(t=>{if(t.id===Number(c.dataset.task))t.done=c.checked});save()});$('taskList').querySelectorAll('[data-taskdel]').forEach(b=>b.onclick=()=>{j.tasks=j.tasks.filter(t=>t.id!==Number(b.dataset.taskdel));save()});$('suppliesInput').value=j.supplies||'';$('notesInput').value=j.notes||'';$('photoList').innerHTML=(j.photos||[]).map((p,i)=>`<div class="muted" style="padding:6px 0">📷 ${esc(p)} <button class="secondary danger" data-photodel="${i}">Remove</button></div>`).join('');$('photoList').querySelectorAll('[data-photodel]').forEach(b=>b.onclick=()=>{j.photos.splice(Number(b.dataset.photodel),1);save()})}
+function renderReport(){let sel=$('reportJob');let old=sel.value;sel.innerHTML=jobs.map(j=>`<option value="${j.id}">${esc(j.customer)} — ${esc(j.name)}</option>`).join('');if(jobs.some(j=>String(j.id)===old))sel.value=old;else if(activeId&&jobs.some(j=>j.id===activeId))sel.value=activeId;const j=jobs.find(x=>x.id===Number(sel.value));$('reportPreview').innerHTML=j?`<h3>${esc(j.name)}</h3><div class="muted">${esc(j.customer)} · ${esc(j.type)} · ${dateLabel(j.date)}</div><p><b>Completed work</b></p>${(j.tasks||[]).filter(t=>t.done).map(t=>`✓ ${esc(t.name)}`).join('<br>')||'<span class="muted">None yet</span>'}<p><b>Incomplete / follow-up</b></p>${(j.tasks||[]).filter(t=>!t.done).map(t=>`○ ${esc(t.name)}`).join('<br>')||'<span class="muted">None</span>'}<p><b>Time recorded:</b> ${clock(duration(j))}</p><p><b>Materials:</b> ${esc(j.supplies||'None entered')}</p><p><b>Notes:</b> ${esc(j.notes||'None entered')}</p>`:'<div class="empty">Create a job first to prepare a report.</div>';if(!j){$('reportText').classList.add('hidden');$('copyReport').classList.add('hidden');$('shareReport').classList.add('hidden')}}
+function renderAll(){renderCalendar();renderDayJobs();renderJobList();if(activeId)renderActive();if(!$('reports').classList.contains('hidden'))renderReport()}
+function editJob(id){let j=jobs.find(x=>x.id===id);if(!j)return;activeId=id;showPage('jobs');$('jobForm').classList.remove('hidden');$('fName').value=j.name;$('fCustomer').value=j.customer;$('fType').value=j.type;$('fAddress').value=j.address||'';$('fDate').value=j.date;$('fNotes').value=j.notes||'';$('saveJob').textContent='Save changes';$('saveJob').dataset.editId=id}
+function resetForm(){$('fName').value='';$('fCustomer').value='';$('fType').value='Construction';$('fAddress').value='';$('fDate').value=selectedDate;$('fNotes').value='';$('saveJob').textContent='Save job';delete $('saveJob').dataset.editId}
+function openNewJob(){resetForm();$('jobForm').classList.remove('hidden');showPage('jobs')}
+$('newJobBtn').onclick=openNewJob;$('addFromCalendar').onclick=openNewJob;$('addForDay').onclick=openNewJob;$('cancelJob').onclick=()=>{$('jobForm').classList.add('hidden');resetForm()};
+$('saveJob').onclick=()=>{let name=$('fName').value.trim(),customer=$('fCustomer').value.trim();if(!name||!customer){alert('Please enter a job name and customer name.');return}let editId=Number($('saveJob').dataset.editId);if(editId){let j=jobs.find(x=>x.id===editId);Object.assign(j,{name,customer,type:$('fType').value,address:$('fAddress').value.trim(),date:$('fDate').value||selectedDate,notes:$('fNotes').value.trim()})}else{let id=Date.now();jobs.push({id,name,customer,type:$('fType').value,address:$('fAddress').value.trim(),date:$('fDate').value||selectedDate,notes:$('fNotes').value.trim(),supplies:'',photos:[],elapsed:0,startedAt:null,tasks:[]});activeId=id}selectedDate=$('fDate').value||selectedDate;let d=new Date(selectedDate+'T12:00:00');viewYear=d.getFullYear();viewMonth=d.getMonth();$('jobForm').classList.add('hidden');resetForm();save();showPage('checklist')};
+$('prevMonth').onclick=()=>{viewMonth--;if(viewMonth<0){viewMonth=11;viewYear--}renderCalendar()};$('nextMonth').onclick=()=>{viewMonth++;if(viewMonth>11){viewMonth=0;viewYear++}renderCalendar()};
+$('switchJob').onclick=()=>showPage('jobs');
+$('startTimer').onclick=()=>{let j=jobs.find(x=>x.id===activeId);if(j&&!j.startedAt){j.startedAt=Date.now();save();startTicker()}};
+$('stopTimer').onclick=()=>{let j=jobs.find(x=>x.id===activeId);if(j&&j.startedAt){j.elapsed=(j.elapsed||0)+Math.floor((Date.now()-j.startedAt)/1000);j.startedAt=null;save()}};
+function startTicker(){if(timerInterval)clearInterval(timerInterval);timerInterval=setInterval(()=>{let j=jobs.find(x=>x.id===activeId);if(j&&j.startedAt){$('timerDisplay').textContent=clock(duration(j));$('timerState').textContent='Timer running — keep this page open'}else clearInterval(timerInterval)},1000)}
+$('taskForm').onsubmit=e=>{e.preventDefault();let j=jobs.find(x=>x.id===activeId),v=$('taskInput').value.trim();if(!j||!v)return;j.tasks.push({id:Date.now(),name:v,done:false});$('taskInput').value='';save()};
+$('suppliesInput').onchange=()=>{let j=jobs.find(x=>x.id===activeId);if(j){j.supplies=$('suppliesInput').value;save()}};
+$('notesInput').onchange=()=>{let j=jobs.find(x=>x.id===activeId);if(j){j.notes=$('notesInput').value;save()}};
+$('addPhoto').onclick=()=>{let j=jobs.find(x=>x.id===activeId),v=$('photoInput').value.trim();if(j&&v){j.photos=j.photos||[];j.photos.push(v);$('photoInput').value='';save()}};
+$('reportJob').onchange=renderReport;
+$('makeReport').onclick=()=>{let j=jobs.find(x=>x.id===Number($('reportJob').value));if(!j)return;let completed=j.tasks.filter(t=>t.done).map(t=>'✓ '+t.name).join('\n')||'None';let unfinished=j.tasks.filter(t=>!t.done).map(t=>'○ '+t.name).join('\n')||'None';$('reportText').value=`WORK SUMMARY\n${j.name}\nCustomer: ${j.customer}\nType: ${j.type}\nDate: ${dateLabel(j.date)}\n\nCOMPLETED\n${completed}\n\nINCOMPLETE / FOLLOW-UP\n${unfinished}\n\nTime recorded: ${clock(duration(j))}\nMaterials: ${j.supplies||'None entered'}\nNotes: ${j.notes||'None entered'}`;$('reportText').classList.remove('hidden');$('copyReport').classList.remove('hidden');$('shareReport').classList.remove('hidden')};
+$('copyReport').onclick=async()=>{try{await navigator.clipboard.writeText($('reportText').value);alert('Report copied. Paste it into your text message.')}catch(e){$('reportText').focus();$('reportText').select();alert('Select and copy the report, then paste it into Messages.')}};
+$('shareReport').onclick=async()=>{let text=$('reportText').value;try{if(navigator.share)await navigator.share({title:'JobDay work report',text});else{location.href='sms:&body='+encodeURIComponent(text)}}catch(e){}};
+window.addEventListener('beforeunload',()=>{let j=jobs.find(x=>x.startedAt);if(j){j.elapsed=(j.elapsed||0)+Math.floor((Date.now()-j.startedAt)/1000);j.startedAt=null;try{localStorage.setItem('jobday_jobs_v1',JSON.stringify(jobs))}catch(e){}}});
+if(jobs.length)activeId=jobs[0].id;
+renderAll();if(jobs.some(j=>j.startedAt))startTicker();
+</script>
+</body>
+</html>
